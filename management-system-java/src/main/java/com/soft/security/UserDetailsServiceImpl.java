@@ -23,6 +23,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Autowired
     private SysUserService sysUserService;
 
+    // UserDetailsService 接口只有一个方法,loadUserByUsername(String username),一般需要我们实现此接口方法,
+    // 根据用户名加载登录认证和访问授权所需要的信息,并返回一个 UserDetails的实现类,后面登录认证和访问授权都需要用到此中的信息
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         SysUser sysUser = sysUserService.findByUsername(username);

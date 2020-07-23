@@ -42,6 +42,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     //对于方法调用授权,在全局方法安全配置类里,
     //      可以看到给 MethodSecurityInterceptor 默认配置的有 RoleVoter、AuthenticatedVoter、Jsr250Voter和 PreInvocationAuthorizationAdviceVoter,
     //      其中 Jsr250Voter、PreInvocationAuthorizationAdviceVoter 都需要打开指定的开关,才会添加支持
+    //  1.RoleVoter 是根据角色进行匹配授权的策略,RoleVoter  默认角色名以 "ROLE_" 为前缀,逐个角色进行匹配,入股有一个匹配得上,则进行授权
+    //  2.AuthenticatedVoter 主要是针对有配置以下几个属性来决定授权的策略
+    //      IS_AUTHENTICATED_REMEMBERED：记住我登录状态
+    //      IS_AUTHENTICATED_ANONYMOUSLY：匿名认证状态
+    //      IS_AUTHENTICATED_FULLY： 完全登录状态，即非上面两种类型
+    //  3.PreInvocationAuthorizationAdviceVoter 是针对类似  @PreAuthorize("hasRole('ROLE_ADMIN')")  注解解析并进行授权的策略
+    //      PreInvocationAuthorizationAdviceVoter 解析出注解属性配置,然后通过调用 PreInvocationAuthorizationAdvice 的前置通知方法进行授权认证,
+    //      默认实现类似 ExpressionBasedPreInvocationAdvice,通知内主要进行了内容的过滤和权限表达式的匹配
 
     @Autowired
     private UserDetailsService userDetailsService;
@@ -55,14 +63,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     /**
      * 访问路径URL的授权策略
      * 指定白名单免登陆认证
-     *
      * @param http HttpSecurity
      * @throws Exception
      */
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         HttpSecurity httpSecurity = http.cors().and().csrf().disable();
-
         // 禁用 csrf, 由于使用的是JWT，我们这里不需要csrf
         httpSecurity.authorizeRequests()
                 // 跨域预检请求
@@ -72,9 +78,33 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 // swagger
                 .antMatchers("/swagger**/**").permitAll()
                 .antMatchers("/webjars/**").permitAll()
-                .antMatchers("/v2/**").permitAll();
-
-        //从配置文件获取白名单列表
+                .antMatchers("/v2/**").permitAll()
+                // 首页和登陆页面
+                // .antMatchers("/").permitAll()
+                // 其他所有请求需要身份验证
+                // .anyRequest().authenticated()
+                // 配置登陆认证 formLogin()返回一个FormLoginConfigurer对象,
+                // FormLoginConfigurer 绑定了一个 UsernamePasswordAuthenticationFilter 过滤器
+                // UsernamePasswordAuthenticationFilter 绑定了 POST 类型 /login 请求
+                // 使用 POST 类型的 /login URL进行登录的时候就会被这个过滤器拦截,并进行登录验证
+                // UsernamePasswordAuthenticationFilter 继承 AbstractAuthenticationProcessingFilter
+                // AbstractAuthenticationProcessingFilter 中的 doFilter 包含了触发登录认证(表单登陆)执行流程的相关逻辑
+                //      1.attemptAuthentication(request, response) 抽象方法,包含登陆主逻辑,由其子类实现具体登陆验证
+                //      2.successfulAuthentication(request, response, chain, authResult) 登陆成功后,将认证之后的 Authentication 对象存储到请求线程上下文,
+                //          这样在授权阶段就可以获取到此认证信息进行访问控制判断 SecurityContextHolder.getContext().setAuthentication(authResult);
+                //          这样在授权阶段就可以获取到 Authentication 认证信息,并利用 Authentication 内的权限信息进行访问控制判断
+                //          Spring Security的登录认证过程是委托给 AuthenticationManager 完成的,它先是解析出用户名和密码,
+                //          然后把用户名和密码封装到一个UsernamePasswordAuthenticationToken 中,传递给 AuthenticationManager,
+                //          交由 AuthenticationManager 完成实际的登录认证过程
+                // AuthenticationManager 提供了一个默认的 实现 ProviderManager,而 ProviderManager 又将验证委托给了 AuthenticationProvider
+                // AuthenticationProvider 衍生出多种类型的实现,AbstractUserDetailsAuthenticationProvider 是 AuthenticationProvider 的抽象实现,
+                //      定义了较为统一的验证逻辑,各种验证方式可以选择直接继承 AbstractUserDetailsAuthenticationProvider 完成登录认证,
+                //      如 DaoAuthenticationProvider 就是继承了此抽象类,完成了从DAO方式获取验证需要的用户信息的
+                // 如上面所述， AuthenticationProvider 通过 retrieveUser(String username, UsernamePasswordAuthenticationToken authentication) 获取验证信息,
+                //      对于我们一般所用的 DaoAuthenticationProvider 是由 UserDetailsService 专门负责获取验证信息的
+                // .and().formLogin().loginProcessingUrl("/login")
+                ;
+        //从配置文件获取白名单列表,白名单过滤
         String[] whiteList = AppConstants.WHITE_LIST;
         for (int i = 0; i < whiteList.length; i++) {
             httpSecurity.authorizeRequests().antMatchers(whiteList[i]).permitAll();
