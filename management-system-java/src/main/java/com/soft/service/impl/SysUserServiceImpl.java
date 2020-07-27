@@ -2,6 +2,8 @@ package com.soft.service.impl;
 
 import com.soft.entity.SysUser;
 import com.soft.service.SysUserService;
+import com.soft.utils.PasswordEncoder;
+import com.soft.utils.PasswordUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -33,11 +35,13 @@ public class SysUserServiceImpl implements SysUserService {
      */
     @Override
     public SysUser findByUsername(String username) {
+        String salt = PasswordUtils.getSalt();
+        String password = new PasswordEncoder(salt).encode("123");
         SysUser sysUser = new SysUser();
         sysUser.setId(1L);
         sysUser.setUsername(username);
-        String password = new BCryptPasswordEncoder().encode("123");
         sysUser.setPassword(password);
+        sysUser.setSalt(salt);
         return sysUser;
     }
 }

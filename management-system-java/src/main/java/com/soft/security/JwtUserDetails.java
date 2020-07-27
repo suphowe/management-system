@@ -2,27 +2,72 @@ package com.soft.security;
 
 import java.util.Collection;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 
 /**
  * 安全用户模型
  * @author suphowe
  */
-public class JwtUserDetails extends User {
-
-    // User为UserDetails默认实现的User,主要包含用户名(username),密码(password),权限(authorities)和一些账号或密码状态的标识
-    // 根据需求定制自己的 UserDetails,然后在 UserDetailsService 的 loadUserByUsername 中返回即可
+public class JwtUserDetails implements UserDetails {
 
     private static final long serialVersionUID = 1L;
 
-    public JwtUserDetails(String username, String password, Collection<? extends GrantedAuthority> authorities) {
-        this(username, password, true, true, true, true, authorities);
+    private final String username;
+    private final String password;
+    private final String salt;
+    private final Collection<? extends GrantedAuthority> authorities;
+
+    JwtUserDetails(String username, String password, String salt, Collection<? extends GrantedAuthority> authorities) {
+        this.username = username;
+        this.password = password;
+        this.salt = salt;
+        this.authorities = authorities;
     }
 
-    public JwtUserDetails(String username, String password, boolean enabled, boolean accountNonExpired,
-                          boolean credentialsNonExpired, boolean accountNonLocked, Collection<? extends GrantedAuthority> authorities) {
-        super(username, password, enabled, accountNonExpired, credentialsNonExpired, accountNonLocked, authorities);
+    @Override
+    public String getUsername() {
+        return username;
+    }
+
+    @JsonIgnore
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    public String getSalt() {
+        return salt;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return authorities;
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isEnabled() {
+        return true;
     }
 
 }

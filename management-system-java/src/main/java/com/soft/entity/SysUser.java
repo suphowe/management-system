@@ -7,6 +7,8 @@ public class SysUser {
 
     private String password;
 
+    private String salt;
+
     public Long getId() {
         return id;
     }
@@ -29,5 +31,13 @@ public class SysUser {
 
     public void setPassword(String password) {
         this.password = password == null ? null : password.trim();
+    }
+
+    public String getSalt() {
+        return salt;
+    }
+
+    public void setSalt(String salt) {
+        this.salt = salt == null ? null : salt.trim();
     }
 }

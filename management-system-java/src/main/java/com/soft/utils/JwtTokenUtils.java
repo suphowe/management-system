@@ -130,7 +130,6 @@ public class JwtTokenUtils implements Serializable {
 
     /**
      * 从令牌中获取数据声明
-     *
      * @param token 令牌
      * @return 数据声明
      */

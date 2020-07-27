@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -98,8 +99,10 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
         // 传递给 AuthenticationManager,交由 AuthenticationManager 完成实际的登录认证过程
         JwtAuthenticatioToken jwtAuthenticatioToken = new JwtAuthenticatioToken(username, password);
 
+        jwtAuthenticatioToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpServletRequest));
+
         // Allow subclasses to set the "details" property
-        setDetails(httpServletRequest, jwtAuthenticatioToken);
+//        setDetails(httpServletRequest, jwtAuthenticatioToken);
 
         return this.getAuthenticationManager().authenticate(jwtAuthenticatioToken);
     }
